@@ -1,24 +1,897 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Plants vs. Zombies MODDED Official</title>
-		<meta property="og:title" content="Play Plants vs Zombies Modded Online" />
-		<meta
-			property="og:description"
-			content="Play Plants vs Zombies Modded here for Free - A tower defense game created by PopCap Games and released on May 5, 2009. Click to Play now! Mod by ROBLNET13 on Github."
-		/>
-		<meta property="og:url" content="https://roblnet13.github.io/pvz/game/iframe.html" />
-		<meta property="og:site_name" content="ROBLNET13" />
-		<meta property="og:image" content="https://roblnet13.github.io/pvz/game/images/gamethumbnail5.png" />
-		<meta property="og:image:alt" content="Plants vs. Zombies MODDED" />
-		<meta property="og:image:type" content="image/png" />
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="theme-color" content="#ff2200" />
-		<meta name="twitter:title" content="Play Plants vs. Zombies Modded Online" />
-		<meta name="twitter:description" content="Play Plants vs. Zombie Modded here for Free - Mod by ROBLNET13 on Github." />
-		<meta name="twitter:image" content="https://roblnet13.github.io/pvz/game/images/gamethumbnail5.png" />
-		<meta http-equiv="refresh" content="0; url=game/iframe.html" />
-	</head>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mesopotamia Defense</title>
+
+<!-- Firebase: same backend as Mesopotamia Rider -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    limit,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // SAME FIREBASE CONFIG AS BEFORE
+  const firebaseConfig = {
+    apiKey: "AIzaSyBTq5Yhu0CC4T0J2pgDD0zyan3i1PicxOc",
+    authDomain: "mesopotamia-rider-leaderboard.firebaseapp.com",
+    projectId: "mesopotamia-rider-leaderboard",
+    storageBucket: "mesopotamia-rider-leaderboard.firebasestorage.app",
+    messagingSenderId: "469063803329",
+    appId: "1:469063803329:web:823d63cb02bf5096d04f40",
+    measurementId: "G-R7YH8DDBE0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // expose to normal script
+  window._db = db;
+  window._firestoreFns = { collection, addDoc, query, orderBy, limit, getDocs };
+</script>
+
+<style>
+  body {
+    margin: 0;
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .layout-root {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1rem;
+    padding: 1rem;
+    height: 100vh;
+    box-sizing: border-box;
+  }
+
+  /* LEFT SIDE: game frame */
+  .game-wrapper {
+    background-color: #1e293b;
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    position: relative;
+    min-height: 60vh;
+    max-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #gameFrameWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 960px;
+    max-height: 80vh;
+    background: #000;
+    border-radius: .5rem;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,.8);
+    transition: filter 0.15s ease;
+    display: flex;
+  }
+
+  #gameFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    flex: 1;
+    background: #000;
+  }
+
+  /* A dim layer we put over the iframe when quiz / submit is up */
+  #gameDimmer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: rgba(0,0,0,0);
+    transition: background 0.15s ease;
+  }
+
+  /* RIGHT: sidebar */
+  .sidebar {
+    background-color: #1e293b;
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    padding: 1rem 1rem 2rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .sidebar h2 {
+    margin: 0 0 .5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #38bdf8;
+    letter-spacing: -0.03em;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .9rem;
+    padding: .4rem .6rem;
+    background: #0f172a;
+    border-radius: .5rem;
+    margin-bottom: .4rem;
+    border: 1px solid #1e293b;
+  }
+
+  .btn {
+    appearance: none;
+    background-color: #38bdf8;
+    color: #0f172a;
+    border: 0;
+    font-weight: 600;
+    font-size: .9rem;
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    margin-top: .5rem;
+  }
+  .btn:active {
+    transform: scale(.98);
+  }
+
+  .panel {
+    background: #0f172a;
+    border-radius: .75rem;
+    padding: .75rem;
+    margin-top: 1rem;
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+  }
+
+  .panel h3 {
+    margin: 0 0 .5rem;
+    font-size: .9rem;
+    font-weight: 500;
+    color: #facc15;
+  }
+
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8rem;
+  }
+  .leaderboard-table th {
+    text-align: left;
+    font-weight: 600;
+    padding-bottom: .5rem;
+    color: #94a3b8;
+  }
+  .leaderboard-table td {
+    padding: .25rem 0;
+    border-bottom: 1px solid #334155;
+    color: #f8fafc;
+  }
+
+  /* FULL-SCREEN OVERLAY (QUIZ + SCORE ENTRY) */
+  .overlay-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.9);
+    color: #f8fafc;
+    display: none; /* turned on with JS */
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 9999;
+  }
+
+  .overlay-card {
+    background: #1e293b;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.8);
+    padding: 1rem 1.25rem 1.5rem;
+  }
+
+  .overlay-card h2 {
+    margin-top: 0;
+    font-size: 1rem;
+    color: #38bdf8;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .overlay-card p.prompt {
+    font-size: .9rem;
+    line-height: 1.4;
+    margin: .5rem 0 1rem 0;
+  }
+
+  .choices {
+    display: grid;
+    gap: .5rem;
+    margin-bottom: 1rem;
+  }
+
+  .choice-btn {
+    background: #0f172a;
+    border-radius: .5rem;
+    border: 2px solid #334155;
+    color: #f8fafc;
+    text-align: left;
+    padding: .6rem .75rem;
+    cursor: pointer;
+    font-size: .85rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .choice-btn.correct {
+    border-color: #22c55e;
+    background: #064e3b;
+  }
+  .choice-btn.wrong {
+    border-color: #ef4444;
+    background: #450a0a;
+  }
+
+  .result-msg {
+    font-size: .8rem;
+    min-height: 1.2em;
+    color: #facc15;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 900px) {
+    .layout-root {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      height: auto;
+    }
+
+    .game-wrapper {
+      max-height: none;
+      min-height: 50vh;
+    }
+
+    #gameFrameWrapper {
+      max-height: 60vh;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout-root">
+
+  <!-- LEFT: the actual Plants vs. Zombies game, running in an iframe -->
+  <main class="game-wrapper">
+    <div id="gameFrameWrapper">
+      <!-- IMPORTANT:
+           This src points at the original game's iframe.html
+           from your project.
+           The index.html you gave me auto-redirects to game/iframe.html.
+           We're basically loading that page here in an iframe. -->
+      <iframe id="gameFrame" src="game/iframe.html" allow="gamepad *"></iframe>
+      <div id="gameDimmer"></div>
+    </div>
+  </main>
+
+  <!-- RIGHT: Scoreboard, quiz stats, leaderboard -->
+  <aside class="sidebar">
+    <h2>Mesopotamia Defense</h2>
+
+    <div class="stat-row">
+      <span>Quiz Points</span>
+      <strong id="quizPoints">0</strong>
+    </div>
+
+    <div class="stat-row">
+      <span>Questions Correct</span>
+      <strong id="questionsCorrect">0</strong>
+    </div>
+
+    <div class="stat-row">
+      <span>Questions Seen</span>
+      <strong id="questionsSeen">0</strong>
+    </div>
+
+    <button class="btn" id="saveScoreBtn">Submit Score to Leaderboard</button>
+
+    <div class="panel">
+      <h3>Top Riders (Class)</h3>
+      <table class="leaderboard-table" id="leaderboardTable">
+        <thead>
+          <tr><th>Name</th><th>Score</th></tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <!-- filled from Firestore -->
+        </tbody>
+      </table>
+    </div>
+  </aside>
+
+</div>
+
+<!-- POPUP OVER EVERYTHING (quiz questions + submit name keyboard) -->
+<div class="overlay-bg" id="overlayBg">
+  <div class="overlay-card" id="overlayCard">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<script>
+  /**********************************************************
+   * CORE STRATEGY:
+   * - Game runs inside an <iframe> (gameFrame).
+   * - When we show quiz or submit score:
+   *    -> We show overlay (full screen div)
+   *    -> We DIM the iframe and BLOCK pointer clicks
+   *    -> We blur the iframe so it stops taking keys
+   * - When we close overlay:
+   *    -> We hide overlay
+   *    -> We undim iframe and refocus it
+   *
+   * RESULT:
+   * - Kids can click answers and tap on-screen letters
+   *   with zero keyboard drama.
+   * - Game continues after we're done.
+   **********************************************************/
+
+  const gameFrameWrapper = document.getElementById("gameFrameWrapper");
+  const gameFrame = document.getElementById("gameFrame");
+  const gameDimmer = document.getElementById("gameDimmer");
+
+  const overlayBg = document.getElementById("overlayBg");
+  const overlayCard = document.getElementById("overlayCard");
+
+  // TRACK THE SCORE STATE
+  let quizPoints = 0;
+  let questionsCorrect = 0;
+  let questionsSeen = 0;
+
+  // bank of Mesopotamia questions
+  const questions = [
+    {
+      q: "What does the word \"Mesopotamia\" mean?",
+      choices: [
+        "A: Land of many mountains",
+        "B: Land between two rivers",
+        "C: The king's land",
+        "D: Hot dry land"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "Which two rivers were most important to Mesopotamia?",
+      choices: [
+        "A: Nile and Amazon",
+        "B: Yellow and Indus",
+        "C: Tigris and Euphrates",
+        "D: Ohio and Mississippi"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "Why did people settle in Mesopotamia?",
+      choices: [
+        "A: There were strong stone walls already built",
+        "B: The rivers flooded and left rich soil for farming",
+        "C: Gold mines were everywhere",
+        "D: It stayed cool all year"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "What is a city-state?",
+      choices: [
+        "A: A city that has no laws",
+        "B: A city and the land around it that rules itself",
+        "C: A city that belongs to another country far away",
+        "D: A city with no army"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "Which of these was one of the first major Sumerian city-states?",
+      choices: [
+        "A: Rome",
+        "B: Athens",
+        "C: Ur",
+        "D: Beijing"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "What was cuneiform?",
+      choices: [
+        "A: A type of army formation",
+        "B: A kind of boat used on the rivers",
+        "C: A tax paid to the king",
+        "D: The writing system made of wedge-shaped marks"
+      ],
+      answerIndex: 3
+    },
+    {
+      q: "Who were scribes in Sumerian society?",
+      choices: [
+        "A: Farmers who grew grain",
+        "B: Warriors who protected the temples",
+        "C: Traders who sold goods in other lands",
+        "D: Trained writers who kept records"
+      ],
+      answerIndex: 3
+    },
+    {
+      q: "What is a ziggurat?",
+      choices: [
+        "A: A round house made of wood",
+        "B: A step-shaped temple in the center of the city",
+        "C: A river boat used for fishing",
+        "D: A type of armor for soldiers"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "Why were ziggurats important?",
+      choices: [
+        "A: They stored extra grain underground",
+        "B: They were used to train soldiers for war",
+        "C: People believed the gods lived at the top",
+        "D: They were market places for trade"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "Which invention is credited to the Sumerians?",
+      choices: [
+        "A: Gunpowder",
+        "B: The wheel",
+        "C: Paper money",
+        "D: The steam engine"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "Who was Hammurabi?",
+      choices: [
+        "A: A farmer who invented irrigation",
+        "B: A scribe who wrote the first story",
+        "C: A Babylonian king known for his laws",
+        "D: A god worshipped in the ziggurat"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "Why is Hammurabi's Code important in history?",
+      choices: [
+        "A: It taught kids how to read cuneiform",
+        "B: It was one of the first written sets of laws",
+        "C: It explained how to build boats",
+        "D: It forced everyone to become a soldier"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "What problem did irrigation solve for Sumerian farmers?",
+      choices: [
+        "A: Too many snakes in the fields",
+        "B: The land was covered in ice",
+        "C: There was either too much or too little water",
+        "D: Farmers didn’t have enough workers"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "What material did Sumerians use most to build houses and walls?",
+      choices: [
+        "A: Marble blocks",
+        "B: Concrete",
+        "C: Iron plates",
+        "D: Sun-dried mud bricks"
+      ],
+      answerIndex: 3
+    },
+    {
+      q: "Why was trade important in Mesopotamia?",
+      choices: [
+        "A: They had tons of metal and needed to get rid of it",
+        "B: They had everything they needed already",
+        "C: They lacked resources like wood and metal, so they traded surplus grain for them",
+        "D: It was required by Hammurabi's Code"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "Which social group had the MOST power in a Sumerian city-state?",
+      choices: [
+        "A: Slaves",
+        "B: Farm workers",
+        "C: Priests and kings",
+        "D: Fishermen"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "The Epic of Gilgamesh is important because it is one of the world's oldest known...",
+      choices: [
+        "A: Maps",
+        "B: Religious laws",
+        "C: Written stories/epics",
+        "D: Math textbooks"
+      ],
+      answerIndex: 2
+    },
+    {
+      q: "Why was Mesopotamia sometimes attacked by outside groups?",
+      choices: [
+        "A: It had huge mountains for hiding armies",
+        "B: It was rich in crops and located in open, flat land",
+        "C: It was surrounded by oceans that pirates wanted",
+        "D: It had volcanoes people wanted to study"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "Which of the following best describes the geography of Mesopotamia?",
+      choices: [
+        "A: Thick rainforest with heavy rain all year",
+        "B: Large deserts and dry plains with rivers running through them",
+        "C: Snowy mountains and icy lakes",
+        "D: Cold tundra with no plants"
+      ],
+      answerIndex: 1
+    },
+    {
+      q: "How did farming lead to the rise of cities in Mesopotamia?",
+      choices: [
+        "A: Farming made people move every day to chase animals",
+        "B: Farming made people stop trading",
+        "C: Farming created extra food, which let people do other jobs like builders, priests, and soldiers",
+        "D: Farming removed the need for leaders"
+      ],
+      answerIndex: 2
+    }
+  ];
+
+  function updateStatsUI() {
+    document.getElementById("quizPoints").textContent = quizPoints;
+    document.getElementById("questionsCorrect").textContent = questionsCorrect;
+    document.getElementById("questionsSeen").textContent = questionsSeen;
+  }
+
+  // showOverlayCard(html):
+  // - shows popup
+  // - dims game iframe
+  // - blocks game input
+  // - focuses on our popup (click/tap UI)
+  function showOverlayCard(html) {
+    overlayCard.innerHTML = html;
+    overlayBg.style.display = "flex";
+
+    // visually pause game
+    gameDimmer.style.background = "rgba(0,0,0,0.5)";
+    gameDimmer.style.pointerEvents = "auto"; // block clicks on iframe
+    gameFrameWrapper.style.filter = "brightness(0.4)";
+
+    // stop iframe from eating keys
+    gameFrame.blur();
+  }
+
+  // hideOverlayCard():
+  // - hide popup
+  // - remove dim
+  // - give iframe focus back so game keeps playing
+  function hideOverlayCard() {
+    overlayBg.style.display = "none";
+
+    gameDimmer.style.background = "rgba(0,0,0,0)";
+    gameDimmer.style.pointerEvents = "none";
+    gameFrameWrapper.style.filter = "none";
+
+    // let the game iframe get focus again
+    setTimeout(() => {
+      if (gameFrame.contentWindow && gameFrame.contentWindow.focus) {
+        gameFrame.contentWindow.focus();
+      }
+      gameFrame.focus();
+    }, 0);
+  }
+
+  // QUIZ POPUP
+  const QUIZ_INTERVAL_MS = 45000; // ~45 seconds
+
+  function askQuestion() {
+    const qObj = questions[Math.floor(Math.random() * questions.length)];
+    questionsSeen++;
+
+    // build answer buttons
+    let answersMarkup = "";
+    qObj.choices.forEach((txt, idx) => {
+      answersMarkup += `
+        <button class="choice-btn" data-idx="${idx}">
+          ${txt}
+        </button>
+      `;
+    });
+
+    const quizMarkup = `
+      <h2>Mesopotamia Checkpoint</h2>
+      <p class="prompt">${qObj.q}</p>
+
+      <div class="choices">
+        ${answersMarkup}
+      </div>
+
+      <div class="result-msg" id="resultMsg"></div>
+
+      <button class="btn" id="continueBtn" disabled>Continue</button>
+    `;
+
+    showOverlayCard(quizMarkup);
+    updateStatsUI();
+
+    const choiceBtns = overlayCard.querySelectorAll(".choice-btn");
+    const resultMsg = overlayCard.querySelector("#resultMsg");
+    const continueBtn = overlayCard.querySelector("#continueBtn");
+
+    let answered = false;
+
+    choiceBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (answered) return;
+        answered = true;
+
+        const picked = parseInt(btn.dataset.idx, 10);
+
+        // correct?
+        if (picked === qObj.answerIndex) {
+          btn.classList.add("correct");
+          resultMsg.textContent = "Correct! +100 points.";
+          quizPoints += 100;
+          questionsCorrect += 1;
+        } else {
+          btn.classList.add("wrong");
+          resultMsg.textContent = "Not quite. No points this time.";
+          // show which WAS correct
+          choiceBtns[qObj.answerIndex].classList.add("correct");
+        }
+
+        // lock all
+        choiceBtns.forEach(b => { b.disabled = true; });
+
+        updateStatsUI();
+        continueBtn.disabled = false;
+      });
+    });
+
+    continueBtn.addEventListener("click", () => {
+      hideOverlayCard();
+    });
+  }
+
+  // Run quiz every 45s
+  setInterval(askQuestion, QUIZ_INTERVAL_MS);
+  // For testing you can force one instantly:
+  // askQuestion();
+
+  // LEADERBOARD LOGIC
+  function escapeHtml(str) {
+    return (str || "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const db = window._db;
+      const { collection, query, orderBy, limit, getDocs } = window._firestoreFns;
+
+      const q = query(
+        collection(db, "mesoLeaderboard"),
+        orderBy("score", "desc"),
+        limit(10)
+      );
+
+      const snap = await getDocs(q);
+      const rows = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        rows.push(`
+          <tr>
+            <td>${escapeHtml(data.name)}</td>
+            <td>${data.score}</td>
+          </tr>
+        `);
+      });
+
+      document.getElementById("leaderboardBody").innerHTML = rows.join("");
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // SCORE SUBMISSION POPUP (ON-SCREEN KEYBOARD, NO TYPING)
+  async function saveScoreFlow() {
+    let currentName = "";
+
+    function rowHTML(letters) {
+      return letters.map(l => {
+        return `<button class="keyBtn" data-letter="${l}" style="
+          flex:1;
+          min-width:2rem;
+          background:#0f172a;
+          color:#f8fafc;
+          border:2px solid #334155;
+          border-radius:.5rem;
+          padding:.5rem .5rem;
+          font-size:.9rem;
+          font-weight:600;
+          cursor:pointer;
+        ">${l}</button>`;
+      }).join("");
+    }
+
+    function renderSubmitOverlay() {
+      const row1 = ["Q","W","E","R","T","Y","U","I","O","P"];
+      const row2 = ["A","S","D","F","G","H","J","K","L"];
+      const row3 = ["Z","X","C","V","B","N","M"];
+
+      const html = `
+        <h2 style="margin-top:0;font-size:1rem;color:#38bdf8;font-weight:600;letter-spacing:-0.03em;">
+          Submit Score
+        </h2>
+
+        <p class="prompt" style="font-size:.9rem;line-height:1.4;margin:.5rem 0 1rem 0;color:#f8fafc;">
+          Tap letters to enter your initials or first name. (Max 12)
+        </p>
+
+        <div id="nameDisplay" style="
+          background:#0f172a;
+          border:2px solid #334155;
+          border-radius:.5rem;
+          padding:.6rem .75rem;
+          font-size:1rem;
+          font-weight:600;
+          color:#f8fafc;
+          text-align:center;
+          letter-spacing:.05em;
+          margin-bottom:1rem;
+          min-height:2.5rem;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">${currentName || "&nbsp;"}</div>
+
+        <div style="font-size:.8rem;color:#94a3b8;margin-bottom:1rem;line-height:1.4;">
+          Total Quiz Points:
+          <strong style="color:#f8fafc;">${quizPoints}</strong>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;">
+            ${rowHTML(row1)}
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;">
+            ${rowHTML(row2)}
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;">
+            ${rowHTML(row3)}
+            <button id="bkspBtn" style="
+              flex:1;
+              min-width:3rem;
+              background:#450a0a;
+              color:#f8fafc;
+              border:2px solid #ef4444;
+              border-radius:.5rem;
+              padding:.5rem .5rem;
+              font-size:.8rem;
+              font-weight:600;
+              cursor:pointer;
+            ">⌫</button>
+          </div>
+        </div>
+
+        <div class="result-msg" id="submitMsg" style="
+          font-size:.8rem;
+          min-height:1.2em;
+          color:#facc15;
+          margin-bottom:1rem;
+          font-weight:500;
+        "></div>
+
+        <button class="btn" id="finalSubmitBtn" style="width:100%;margin-bottom:.5rem;">
+          Submit
+        </button>
+
+        <button class="btn" id="cancelSubmitBtn" style="
+          width:100%;
+          background:#334155;
+          color:#f8fafc;
+        ">
+          Cancel
+        </button>
+      `;
+
+      showOverlayCard(html);
+
+      const nameDisplay = document.getElementById("nameDisplay");
+      const submitMsg = document.getElementById("submitMsg");
+      const cancelSubmitBtn = document.getElementById("cancelSubmitBtn");
+      const finalSubmitBtn = document.getElementById("finalSubmitBtn");
+      const bkspBtn = document.getElementById("bkspBtn");
+
+      // letter buttons
+      overlayCard.querySelectorAll(".keyBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (currentName.length >= 12) return;
+          currentName += btn.dataset.letter;
+          nameDisplay.innerHTML = currentName || "&nbsp;";
+        });
+      });
+
+      // backspace
+      bkspBtn.addEventListener("click", () => {
+        currentName = currentName.slice(0, -1);
+        nameDisplay.innerHTML = currentName || "&nbsp;";
+      });
+
+      // cancel
+      cancelSubmitBtn.addEventListener("click", () => {
+        hideOverlayCard();
+      });
+
+      // final submit
+      finalSubmitBtn.addEventListener("click", async () => {
+        const shortName = currentName.trim();
+        if (!shortName) {
+          submitMsg.textContent = "Please enter at least 1 letter.";
+          return;
+        }
+
+        try {
+          const db = window._db;
+          const { collection, addDoc } = window._firestoreFns;
+
+          await addDoc(collection(db, "mesoLeaderboard"), {
+            name: shortName,
+            score: quizPoints,
+            ts: Date.now()
+          });
+
+          submitMsg.textContent = "Score submitted!";
+          loadLeaderboard();
+        } catch (err) {
+          console.error(err);
+          submitMsg.textContent = "Error saving score.";
+        }
+      });
+    }
+
+    renderSubmitOverlay();
+  }
+
+  // Hook button in sidebar
+  document.getElementById("saveScoreBtn").addEventListener("click", saveScoreFlow);
+
+  // Load leaderboard once on page load
+  loadLeaderboard();
+</script>
+
+</body>
 </html>
